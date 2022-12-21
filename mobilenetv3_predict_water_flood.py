@@ -198,3 +198,4 @@ print('correct_count = ', correct_count)
 print('invalid_count = ', invalid_count)
 print('accuracy = ', acc)
 
+print('class_names', class_names)

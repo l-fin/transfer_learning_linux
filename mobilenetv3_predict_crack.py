@@ -19,6 +19,7 @@ import time
 import os
 import copy
 import cv2
+import shutil
 
 from PIL import Image
 
@@ -132,6 +133,9 @@ model_conv = model_conv.to(device)
 data_dir_crack = 'data/crack_detection/test/crack'
 data_dir_non_crack = 'data/crack_detection/test/non-crack'
 
+error_data_dir_crack = 'error_data/crack_detection/crack'
+error_data_dir_non_crack = 'error_data/crack_detection/non-crack'
+
 file_list_crack = os.listdir(data_dir_crack)
 file_list_non_crack = os.listdir(data_dir_non_crack)
 
@@ -159,7 +163,7 @@ with torch.no_grad():
             outputs = model_conv(image)
             _, preds = torch.max(outputs, 1)
 
-            print('test:', test_image, ', predicted: {}'.format(class_names[preds]))
+            #print('test:', test_image, ', predicted: {}'.format(class_names[preds]))
 
             total_count = total_count + 1
 
@@ -167,6 +171,8 @@ with torch.no_grad():
                 correct_count = correct_count + 1
             else:
                 invalid_count = invalid_count + 1
+                print('invalid: test:', test_image, ', predicted: {}'.format(class_names[preds]))
+                shutil.copytree(src, dst)(test_image, error_data_dir_crack)
 
     for file in file_list_non_crack:
         if 'jpg' in file:
@@ -183,7 +189,7 @@ with torch.no_grad():
             outputs = model_conv(image)
             _, preds = torch.max(outputs, 1)
 
-            print('test:', test_image, ', predicted: {}'.format(class_names[preds]))
+            #print('test:', test_image, ', predicted: {}'.format(class_names[preds]))
 
             total_count = total_count + 1
 
@@ -191,6 +197,8 @@ with torch.no_grad():
                 correct_count = correct_count + 1
             else:
                 invalid_count = invalid_count + 1
+                print('invalid: test:', test_image, ', predicted: {}'.format(class_names[preds]))
+                shutil.copy(test_image, error_data_dir_non_crack)
 
 acc = correct_count / total_count
 
