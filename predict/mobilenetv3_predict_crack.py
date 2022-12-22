@@ -19,6 +19,7 @@ import time
 import os
 import copy
 import cv2
+import shutil
 
 from PIL import Image
 
@@ -45,7 +46,7 @@ data_transforms = {
 }
 
 #data_dir = 'data/hymenoptera_data'
-data_dir = 'data/water_flood'
+data_dir = '../train/data/crack_detection'
 
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                           data_transforms[x])
@@ -122,18 +123,21 @@ def visualize_model(model, num_images=6):
 # In[5]:
 
 
-model_conv = torch.load("resnet18_conv_water_flood.pth")
+model_conv = torch.load("../train/mobilenetv3_model_conv_crack.pth")
 
 model_conv = model_conv.to(device)
 
 
 # In[6]:
 
-data_dir_flood = 'data/water_flood/test/flood'
-data_dir_non_flood = 'data/water_flood/test/non-flood'
+data_dir_crack = '../train/data/crack_detection/test/crack'
+data_dir_non_crack = '../train/data/crack_detection/test/non-crack'
 
-file_list_flood = os.listdir(data_dir_flood)
-file_list_non_flood = os.listdir(data_dir_non_flood)
+error_data_dir_crack = './error_data/crack_detection/crack'
+error_data_dir_non_crack = './error_data/crack_detection/crack'
+
+file_list_crack = os.listdir(data_dir_crack)
+file_list_non_crack = os.listdir(data_dir_non_crack)
 
 total_count = 0
 correct_count = 0
@@ -144,9 +148,9 @@ model_conv.eval()
 
 with torch.no_grad():
 
-    for file in file_list_flood:
+    for file in file_list_crack:
         if 'jpg' in file:
-            test_image = data_dir_flood + '/' + file
+            test_image = data_dir_crack + '/' + file
 
             image = Image.open(test_image)
             
@@ -159,20 +163,20 @@ with torch.no_grad():
             outputs = model_conv(image)
             _, preds = torch.max(outputs, 1)
 
-            print('test:', test_image, ', predicted: {}'.format(class_names[preds]))        
+            #print('test:', test_image, ', predicted: {}'.format(class_names[preds]))
 
             total_count = total_count + 1
 
-            if class_names[preds] == "flood":
+            if class_names[preds] == "crack":
                 correct_count = correct_count + 1
             else:
                 invalid_count = invalid_count + 1
+                print('invalid: test:', test_image, ', predicted: {}'.format(class_names[preds]))
+                #shutil.copytree(test_image, error_data_dir_crack)
 
-with torch.no_grad():
-    
-    for file in file_list_non_flood:
+    for file in file_list_non_crack:
         if 'jpg' in file:
-            test_image = data_dir_non_flood + '/' + file
+            test_image = data_dir_non_crack + '/' + file
 
             image = Image.open(test_image)
             
@@ -185,14 +189,16 @@ with torch.no_grad():
             outputs = model_conv(image)
             _, preds = torch.max(outputs, 1)
 
-            print('test:', test_image, ', predicted: {}'.format(class_names[preds]))        
+            #print('test:', test_image, ', predicted: {}'.format(class_names[preds]))
 
             total_count = total_count + 1
 
-            if class_names[preds] == "non-flood":
+            if class_names[preds] == "non-crack":
                 correct_count = correct_count + 1
             else:
                 invalid_count = invalid_count + 1
+                print('invalid: test:', test_image, ', predicted: {}'.format(class_names[preds]))
+                #shutil.copy(test_image, error_data_dir_non_crack)
 
 acc = correct_count / total_count
 
@@ -200,5 +206,4 @@ print('total_count = ', total_count)
 print('correct_count = ', correct_count)
 print('invalid_count = ', invalid_count)
 print('accuracy = ', acc)
-
 

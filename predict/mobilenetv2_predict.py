@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[3]:
 
 
 from __future__ import print_function, division
@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 import time
 import os
 import copy
-import cv2
 
 from PIL import Image
 
@@ -26,7 +25,7 @@ cudnn.benchmark = True
 plt.ion()   # interactive mode
 
 
-# In[2]:
+# In[4]:
 
 
 data_transforms = {
@@ -44,8 +43,7 @@ data_transforms = {
     ]),
 }
 
-#data_dir = 'data/hymenoptera_data'
-data_dir = 'data/water_flood'
+data_dir = '../train/data/hymenoptera_data'
 
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                           data_transforms[x])
@@ -63,7 +61,7 @@ class_names = image_datasets['train'].classes
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-# In[3]:
+# In[5]:
 
 
 def imshow(inp, title=None):
@@ -88,7 +86,7 @@ out = torchvision.utils.make_grid(inputs)
 imshow(out, title=[class_names[x] for x in classes])
 
 
-# In[4]:
+# In[6]:
 
 
 def visualize_model(model, num_images=6):
@@ -119,83 +117,76 @@ def visualize_model(model, num_images=6):
         model.train(mode=was_training)
 
 
-# In[5]:
+# In[10]:
 
 
-model_conv = torch.load("mobilenetv3_model_conv_water_flood.pth")
+#model_ft = models.resnet18(pretrained=True)
+#model_ft = torch.load("model_conv.pth")
+#model_ft = torch.load("model_ft.pth")
 
-model_conv = model_conv.to(device)
+#model_ft = torch.load("mobilenetv2_model_conv.pth")
+model_ft = torch.load("mobilenetv2_model_ft.pth")
 
-# In[6]:
+#num_ftrs = model_ft.fc.in_features
+print(model_ft)
+num_ftrs = model_ft.classifier[1].in_features
 
-data_dir_flood = 'data/water_flood/test/flood'
-data_dir_non_flood = 'data/water_flood/test/non-flood'
+# Here the size of each output sample is set to 2.
+# Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
+#model_ft.fc = nn.Linear(num_ftrs, 2)
+model_ft.classifier = nn.Linear(num_ftrs, 2)
 
-file_list_flood = os.listdir(data_dir_flood)
-file_list_non_flood = os.listdir(data_dir_non_flood)
+model_ft = model_ft.to(device)
 
-total_count = 0
-correct_count = 0
-invalid_count = 0
 
-was_training = model_conv.training
-model_conv.eval()
+# In[ ]:
 
-with torch.no_grad():
 
-    for file in file_list_flood:
-        if 'jpg' in file:
-            test_image = data_dir_flood + '/' + file
-  
-            image = Image.open(test_image)
-            
-            numpy_image=np.array(image)  
+test_image = './data/hymenoptera_data/val/ants/800px-Meat_eater_ant_qeen_excavating_hole.jpg'
 
-            image = data_transforms['val'](image).unsqueeze(0).cuda()
+image = Image.open(test_image)
 
-            image = image.to(device)
+plt.imshow(image), plt.xticks([]), plt.yticks([])
 
-            outputs = model_conv(image)
-            _, preds = torch.max(outputs, 1)
+image = data_transforms['val'](image).unsqueeze(0).cuda()
 
-            print('test:', test_image, ', predicted: {}'.format(class_names[preds]))
+outputs = model_ft(image)
+_, preds = torch.max(outputs, 1)
 
-            total_count = total_count + 1
+print('outputs:', outputs);
 
-            if class_names[preds] == "flood":
-                correct_count = correct_count + 1
-            else:
-                invalid_count = invalid_count + 1
+print('preds', preds)
+#print('predicted: {}'.format(class_names[preds]))
 
-    for file in file_list_non_flood:
-        if 'jpg' in file:
-            test_image = data_dir_non_flood + '/' + file
 
-            image = Image.open(test_image)
-            
-            numpy_image=np.array(image)  
+# In[ ]:
 
-            image = data_transforms['val'](image).unsqueeze(0).cuda()
 
-            image = image.to(device)
+test_image = './data/hymenoptera_data/val/bees/372228424_16da1f8884.jpg'
 
-            outputs = model_conv(image)
-            _, preds = torch.max(outputs, 1)
+image = Image.open(test_image)
 
-            print('test:', test_image, 'predicted: {}'.format(class_names[preds]))
+plt.imshow(image), plt.xticks([]), plt.yticks([])
 
-            total_count = total_count + 1
+image = data_transforms['val'](image).unsqueeze(0).cuda()
 
-            if class_names[preds] == "non-flood":
-                correct_count = correct_count + 1
-            else:
-                invalid_count = invalid_count + 1
+outputs = model_ft(image)
+_, preds = torch.max(outputs, 1)
 
-acc = correct_count / total_count
+print('outputs:', outputs);
 
-print('total_count = ', total_count)
-print('correct_count = ', correct_count)
-print('invalid_count = ', invalid_count)
-print('accuracy = ', acc)
+#print('preds', preds)
+print('predicted: {}'.format(class_names[preds]))
 
-print('class_names', class_names)
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
